@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายรับ-รายจ่าย ของนักเรียน 💰</title>
+<style>
+:root{
+  --pink:#ff8fab; --purple:#9b8afb; --blue:#75c9ff; --yellow:#ffd86b;
+  --green:#75d6a2; --red:#ff8b8b; --ink:#514b63; --card:#ffffffee;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family: "Arial","Tahoma",sans-serif; color:var(--ink);
+  background:linear-gradient(135deg,#fff0f6,#eef7ff 45%,#f5efff);
+  min-height:100vh;
+}
+.container{width:min(1050px,94%);margin:auto;padding:25px 0 45px}
+header{
+  background:linear-gradient(135deg,var(--pink),var(--purple));
+  color:white;border-radius:28px;padding:25px;
+  box-shadow:0 12px 30px #9b8afb33; position:relative; overflow:hidden;
+}
+header:before,header:after{content:"";position:absolute;border-radius:50%;background:#ffffff25}
+header:before{width:140px;height:140px;right:-30px;top:-55px}
+header:after{width:90px;height:90px;left:45%;bottom:-45px}
+h1{margin:0 0 6px;font-size:clamp(28px,5vw,42px)}
+.subtitle{margin:0;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:18px 0}
+.card{
+  background:var(--card);backdrop-filter:blur(8px);border-radius:22px;
+  padding:18px;box-shadow:0 8px 25px #7b6eaa18;border:2px solid #fff;
+}
+.stat .emoji{font-size:30px}.stat h3{margin:6px 0 3px;font-size:15px}
+.amount{font-size:25px;font-weight:800}
+.income{color:#28a86b}.expense{color:#e85e68}.balance{color:#725ce0}
+.layout{display:grid;grid-template-columns:340px 1fr;gap:18px}
+h2{font-size:20px;margin:0 0 15px}
+label{font-size:14px;font-weight:700;display:block;margin:10px 0 5px}
+input,select,button{
+  width:100%;padding:12px 13px;border-radius:14px;border:2px solid #eee;
+  font:inherit;outline:none;
+}
+input:focus,select:focus{border-color:#b5a7ff}
+button{border:0;cursor:pointer;font-weight:800;transition:.2s}
+button:hover{transform:translateY(-1px)}
+.add{background:linear-gradient(135deg,var(--purple),#7864e8);color:white;margin-top:15px}
+.type-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type-row button{background:#f5f4fb;color:#777}
+.type-row button.active-income{background:#ddf8e9;color:#238b5d;border:2px solid #8ee0b5}
+.type-row button.active-expense{background:#ffe1e5;color:#d85060;border:2px solid #ff9baa}
+.toolbar{display:flex;gap:8px;margin-bottom:12px}
+.toolbar input{flex:1}
+.clear{width:auto;background:#fff0f0;color:#dc5964;padding:10px 13px}
+.txn{
+  display:flex;align-items:center;gap:12px;padding:12px 4px;
+  border-bottom:1px dashed #ddd;
+}
+.txn:last-child{border-bottom:0}
+.icon{
+  width:43px;height:43px;border-radius:15px;display:grid;place-items:center;font-size:21px;
+}
+.txn.in .icon{background:#e2f8ec}.txn.out .icon{background:#ffe3e7}
+.info{flex:1;min-width:0}.info b{display:block}.info small{color:#999}
+.txn .money{font-weight:800}.txn.in .money{color:#28a86b}.txn.out .money{color:#e85e68}
+.delete{width:auto;background:#f4f1fa;color:#9b91ae;padding:7px 9px;border-radius:10px}
+.empty{text-align:center;padding:30px 10px;color:#999}
+.progress-wrap{margin-top:13px}
+.progress{height:13px;background:#eee;border-radius:99px;overflow:hidden}
+.bar{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));width:0%;transition:.3s}
+.tip{background:#fff7d9;border-color:#ffeaa1}
+footer{text-align:center;color:#999;margin-top:20px;font-size:13px}
+@media(max-width:760px){
+  .grid{grid-template-columns:1fr}.layout{grid-template-columns:1fr}
+  .toolbar{flex-wrap:wrap}.toolbar input{min-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>💰 รายรับ-รายจ่าย ของนักเรียน</h1>
+  <p class="subtitle">บันทึกรายรับ–รายจ่ายง่าย ๆ รู้เงินคงเหลือ และวางแผนการออมได้ในที่เดียว ✨</p>
+</header>
+
+<section class="grid">
+  <div class="card stat"><div class="emoji">🌈</div><h3>เงินคงเหลือ</h3><div id="balance" class="amount balance">฿0.00</div></div>
+  <div class="card stat"><div class="emoji">🤑</div><h3>รายรับทั้งหมด</h3><div id="income" class="amount income">฿0.00</div></div>
+  <div class="card stat"><div class="emoji">🛍️</div><h3>รายจ่ายทั้งหมด</h3><div id="expense" class="amount expense">฿0.00</div></div>
+</section>
+
+<div class="layout">
+  <div>
+    <div class="card">
+      <h2>➕ เพิ่มรายการ</h2>
+      <label>ประเภท</label>
+      <div class="type-row">
+        <button id="incomeBtn" class="active-income" onclick="setType('income')">🤑 รายรับ</button>
+        <button id="expenseBtn" onclick="setType('expense')">🛍️ รายจ่าย</button>
+      </div>
+      <label for="amount">จำนวนเงิน (บาท)</label>
+      <input id="amount" type="number" min="0" step="0.01" placeholder="เช่น 50">
+      <label for="note">รายการ</label>
+      <input id="note" type="text" maxlength="60" placeholder="เช่น ค่าขนม / เงินค่ารถ">
+      <label for="date">วันที่</label>
+      <input id="date" type="date">
+      <button class="add" onclick="addTransaction()">💖 บันทึกรายการ</button>
+    </div>
+
+    <div class="card tip" style="margin-top:15px">
+      <h2>🎯 เป้าหมายการออม</h2>
+      <label>เป้าหมาย (บาท)</label>
+      <input id="goal" type="number" min="0" placeholder="เช่น 1000">
+      <div class="progress-wrap">
+        <div class="progress"><div id="bar" class="bar"></div></div>
+        <small id="goalText">ตั้งเป้าหมายเพื่อดูความคืบหน้า ✨</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📒 รายการของฉัน</h2>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="🔎 ค้นหารายการ..." oninput="render()">
+      <button class="clear" onclick="clearAll()">ล้างทั้งหมด</button>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <h2>📱 วิธีการใช้งาน</h2>
+  <ol style="line-height:1.9;margin:0;padding-left:22px">
+    <li>กดเลือก <b>🤑 รายรับ</b> หรือ <b>🛍️ รายจ่าย</b></li>
+    <li>ใส่จำนวนเงิน เช่น 50 บาท</li>
+    <li>พิมพ์ชื่อรายการ เช่น “ค่าขนม” หรือ “เงินค่ารถ”</li>
+    <li>เลือกวันที่ แล้วกด <b>💖 บันทึกรายการ</b></li>
+    <li>ดูยอด <b>เงินคงเหลือ รายรับ และรายจ่าย</b> ได้ด้านบนทันที</li>
+    <li>ถ้าต้องการออมเงิน ให้ใส่จำนวนใน <b>🎯 เป้าหมายการออม</b></li>
+    <li>ใช้ช่อง 🔎 เพื่อค้นหารายการ และกด ✕ เพื่อลบรายการที่ไม่ต้องการ</li>
+  </ol>
+  <p style="margin:12px 0 0;color:#8b8399">💡 ใช้บนโทรศัพท์ได้ทั้งแนวตั้งและแนวนอน และข้อมูลจะถูกเก็บไว้ในเครื่องโดยอัตโนมัติ</p>
+</div>
+
+<footer>ข้อมูลถูกเก็บไว้ในเครื่องนี้อัตโนมัติ • เว็บแอปสำหรับนักเรียน 🌷</footer>
+</div>
+
+<script>
+let transactions = JSON.parse(localStorage.getItem('studentMoneyTransactions') || '[]');
+let type = 'income';
+const amountEl = document.getElementById('amount');
+const noteEl = document.getElementById('note');
+const dateEl = document.getElementById('date');
+const goalEl = document.getElementById('goal');
+
+dateEl.value = new Date().toISOString().slice(0,10);
+goalEl.value = localStorage.getItem('studentMoneyGoal') || '';
+
+function money(n){ return '฿' + Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function setType(t){
+  type=t;
+  document.getElementById('incomeBtn').className=t==='income'?'active-income':'';
+  document.getElementById('expenseBtn').className=t==='expense'?'active-expense':'';
+}
+
+function save(){
+  localStorage.setItem('studentMoneyTransactions',JSON.stringify(transactions));
+}
+
+function addTransaction(){
+  const amount=Number(amountEl.value);
+  const note=noteEl.value.trim();
+  if(!amount || amount<=0){ alert('กรุณาใส่จำนวนเงินให้ถูกต้อง 😊'); amountEl.focus(); return; }
+  if(!note){ alert('กรุณาใส่ชื่อรายการก่อนนะ 💕'); noteEl.focus(); return; }
+  transactions.unshift({id:Date.now(),type,amount,note,date:dateEl.value||new Date().toISOString().slice(0,10)});
+  save(); amountEl.value=''; noteEl.value=''; render();
+}
+
+function deleteTransaction(id){
+  transactions=transactions.filter(x=>x.id!==id); save(); render();
+}
+
+function clearAll(){
+  if(!transactions.length){return}
+  if(confirm('ต้องการลบรายการทั้งหมดใช่ไหม?')){transactions=[];save();render();}
+}
+
+function render(){
+  const inc=transactions.filter(x=>x.type==='income').reduce((s,x)=>s+x.amount,0);
+  const exp=transactions.filter(x=>x.type==='expense').reduce((s,x)=>s+x.amount,0);
+  document.getElementById('income').textContent=money(inc);
+  document.getElementById('expense').textContent=money(exp);
+  document.getElementById('balance').textContent=money(inc-exp);
+
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const shown=transactions.filter(x=>x.note.toLowerCase().includes(q));
+  const list=document.getElementById('list');
+
+  if(!shown.length){
+    list.innerHTML='<div class="empty">🌷 ยังไม่มีรายการ<br><small>ลองเพิ่มรายรับหรือรายจ่ายรายการแรกกันเลย!</small></div>';
+  } else {
+    list.innerHTML=shown.map(x=>`
+      <div class="txn ${x.type==='income'?'in':'out'}">
+        <div class="icon">${x.type==='income'?'💵':'🛒'}</div>
+        <div class="info"><b>${escapeHtml(x.note)}</b><small>${formatDate(x.date)}</small></div>
+        <div class="money">${x.type==='income'?'+':'-'}${money(x.amount)}</div>
+        <button class="delete" onclick="deleteTransaction(${x.id})">✕</button>
+      </div>`).join('');
+  }
+
+  const goal=Number(goalEl.value||0);
+  localStorage.setItem('studentMoneyGoal',goal||'');
+  const pct=goal>0?Math.min(100,Math.max(0,(inc-exp)/goal*100)):0;
+  document.getElementById('bar').style.width=pct+'%';
+  document.getElementById('goalText').textContent=goal>0
+    ? `เก็บได้ ${money(Math.max(0,inc-exp))} จาก ${money(goal)} • ${pct.toFixed(0)}%`
+    : 'ตั้งเป้าหมายเพื่อดูความคืบหน้า ✨';
+}
+function formatDate(d){ if(!d)return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+goalEl.addEventListener('input',render);
+amountEl.addEventListener('keydown',e=>{if(e.key==='Enter')addTransaction()});
+noteEl.addEventListener('keydown',e=>{if(e.key==='Enter')addTransaction()});
+render();
+</script>
+</body>
+</html>
